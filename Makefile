@@ -6,8 +6,8 @@ OBJS = *.o
 
 all:$(TARGETS)
 
-lsh:lsh.o dataset.o image.o
-	$(CC) $(FLAGS) -o lsh lsh.o dataset.o image.o
+lsh:lsh.o dataset.o image.o hash_function.o utilities.o
+	$(CC) $(FLAGS) -o lsh lsh.o dataset.o image.o hash_function.o utilities.o
 
 lsh.o:$(SRC_DIR)/lsh.cpp
 	$(CC) $(FLAGS) -o lsh.o -c $(SRC_DIR)/lsh.cpp
@@ -17,6 +17,12 @@ dataset.o:$(SRC_DIR)/dataset.cpp
 
 image.o:$(SRC_DIR)/image.cpp
 	$(CC) $(FLAGS) -o image.o -c $(SRC_DIR)/image.cpp
+
+hash_function.o:$(SRC_DIR)/hash_function.cpp
+	$(CC) $(FLAGS) -o hash_function.o -c $(SRC_DIR)/hash_function.cpp
+
+utilities.o:$(SRC_DIR)/utilities.o
+	$(CC) $(FLAGS) -o utilities.o -c $(SRC_DIR)/utilities.cpp
 
 .PHONY : clean
 

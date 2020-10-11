@@ -24,24 +24,20 @@ Dataset::Dataset(std::string inputPath)
     this->head.num_of_rows = SWAP_INT32(this->head.num_of_rows);
     this->head.num_of_columns = SWAP_INT32(this->head.num_of_columns);
 
-    // Allocate space for images
-    this->images = new std::vector<Image*>();
-
     // TODO:Read images
     for (int i = 0; i < this->head.num_of_images; i++) {
-        Pixel img[this->head.num_of_columns* this->head.num_of_rows];
+        Pixel img[getImageDimension()];
 
         input.read((char*)&img, sizeof(img));
         // Read pixels for every image
         //std::cout << "Image " << i+1 << ":\n";
-        this->images->push_back(new Image(this->head.num_of_columns, this->head.num_of_rows));
-        for (int p = 0; p < this->head.num_of_rows * this->head.num_of_columns; p++) {
+        this->images.push_back(new Image(this->head.num_of_columns, this->head.num_of_rows));
+        for (int p = 0; p < this->getImageDimension(); p++) {
             //input.read((char*)&pixel,sizeof(Pixel));
-            this->images->at(i)->setPixel(p,img[p]);
+            this->images.at(i)->setPixel(p,img[p]);
         }
         //std::cout << "\n\n";
     }
-    
 
     std::cout << "Magic Number: " << this->head.magic_num << std::endl;
     std::cout << "Number of images: " << this->head.num_of_images << std::endl;
@@ -51,9 +47,16 @@ Dataset::Dataset(std::string inputPath)
     input.close();
 }
 
+int Dataset::getImageDimension() {
+    return this->head.num_of_rows * this->head.num_of_columns;
+}
+
+std::vector<Image*> Dataset::getImages(){
+    return this->images;
+}
+
 Dataset::~Dataset() {
-    for (std::vector<Image*>::iterator it = this->images->begin();it < this->images->end();it++) {
+    for (std::vector<Image*>::iterator it = this->images.begin();it < this->images.end();it++) {
         delete *it;
     }
-    delete this->images;
 }

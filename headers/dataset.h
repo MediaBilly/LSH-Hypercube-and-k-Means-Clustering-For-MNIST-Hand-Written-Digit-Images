@@ -16,10 +16,12 @@ class Dataset
         };
 
         header head;
-        std::vector<Image*> *images;
+        std::vector<Image*> images;
 
     public:
         Dataset(std::string inputPath);
+        int getImageDimension();
+        std::vector<Image*> getImages();
         ~Dataset();
 };
 

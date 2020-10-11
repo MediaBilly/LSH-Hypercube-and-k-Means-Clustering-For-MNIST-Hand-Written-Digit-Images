@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include "../headers/dataset.h"
+#include "../headers/hash_function.h"
 
 using namespace std;
 
@@ -12,10 +13,12 @@ void usage() {
 int main(int argc, char const *argv[])
 {
 	string inputFile, queryFile, outputFile;
-	int k, L, N, R;
-    
+    // Set default parameter values
+	int k = 4, L = 5, N = 1;
+    double R = 1.0;
+    /*
     // Check usage
-    if (argc == 15) {
+    if (argc >= 7 && argc <= 15) {
         for(int i = 1; i < argc; i+=2) {
             string arg(argv[i]);
 
@@ -38,7 +41,7 @@ int main(int argc, char const *argv[])
 				N = atoi(argv[i+1]);
 			}
 			else if(arg.compare("-R")) {
-				R = atoi(argv[i+1]);
+				R = stod(argv[i+1]);
 			}
 			else {
 				usage();
@@ -64,8 +67,24 @@ int main(int argc, char const *argv[])
 	else {
 		usage();
 		return 0;
-	}
-
+	}*/
+    // Read Dataset
     Dataset dataset("./datasets/input.dat");
+    
+    // Get images from dataset
+    std::vector<Image*> images = dataset.getImages();
+
+    // Generate hash family
+    Hash_Function hashFamily(k, 579, dataset.getImageDimension());
+    
+    // Hash them
+    for (unsigned int i = 0; i < images.size(); i++) {
+        std::cout << "Image " << i + 1 << " hash: ";
+        for (int j = 0;j < k;j++) {
+            std::cout << hashFamily.hash(images[i],j) << " ";
+        }
+        cout << endl;
+    }
+
     return 0;
 }
