@@ -30,19 +30,11 @@ Dataset::Dataset(std::string inputPath)
 
         input.read((char*)&img, sizeof(img));
         // Read pixels for every image
-        //std::cout << "Image " << i+1 << ":\n";
-        this->images.push_back(new Image(this->head.num_of_columns, this->head.num_of_rows));
+        this->images.push_back(new Image(i+1, this->head.num_of_columns, this->head.num_of_rows));
         for (int p = 0; p < this->getImageDimension(); p++) {
-            //input.read((char*)&pixel,sizeof(Pixel));
             this->images.at(i)->setPixel(p,img[p]);
         }
-        //std::cout << "\n\n";
     }
-
-    std::cout << "Magic Number: " << this->head.magic_num << std::endl;
-    std::cout << "Number of images: " << this->head.num_of_images << std::endl;
-    std::cout << "Number of rows: " << this->head.num_of_rows << std::endl;
-    std::cout << "Number of columns: " << this->head.num_of_columns << std::endl;
     // Close dataset binary file
     input.close();
 }

@@ -1,27 +1,18 @@
 #pragma once
 
 #include <list>
+#include "image.h"
+#include "hash_function.h"
 
-
-class Hash_table
-{ 
-    int BUCKET;    // No. of buckets 
-  
-    // Pointer to an array containing buckets 
-    list<int> *table; 
-public: 
-    Hash_table(int V);  // Constructor 
-    ~Hash_table();
-    // inserts a key into hash table 
-    void insertItem(int x); 
-  
-    // deletes a key from hash table 
-    void deleteItem(int key); 
-  
-    // hash function to map values to key 
-    int hashFunction(int x) { 
-        return (x % BUCKET); 
-    } 
-  
-    void displayHash(); 
+class Hash_Table
+{
+    private:
+        int k, w, d, buckets; // d is dimension of the vectors
+        Hash_Function *hash_function;
+        std::list<Image*> *table; // Array of buckets. Each bucket is a list of images(vectors)
+        
+    public: 
+        Hash_Table(int k, int w, int d, int buckets);  // Constructor 
+        ~Hash_Table();
+        bool insert(Image *image);
 }; 

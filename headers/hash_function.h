@@ -7,7 +7,7 @@
 class Hash_Function
 {
     private:
-        int k, w, M, d;
+        int k, w, M, d; // d is dimension of the vectors
         unsigned long **s;
     public:
         Hash_Function(int k, int w, int d);
