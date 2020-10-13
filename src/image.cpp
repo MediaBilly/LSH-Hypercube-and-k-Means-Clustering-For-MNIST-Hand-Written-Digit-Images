@@ -1,6 +1,7 @@
 #include "../headers/image.h"
 #include "../headers/utilities.h"
 #include <cmath>
+#include <iostream>
 
 Image::Image(int id,int width,int height) {
     this->id = id;
@@ -20,6 +21,10 @@ bool Image::setPixel(int index,Pixel pixel) {
     return true;
 }
 
+int Image::getId() {
+    return this->id;
+}
+
 Pixel Image::getPixel(int index) {
     return (index < this->width*this->height && index >= 0) ? this->pixels[index] : -1;
 }
@@ -36,7 +41,7 @@ double Image::distance(Image *image, int norm) {
     
     double d = 0.0;
     for (int i = 0; i < this->getSize(); i++) {
-        d += power(abs(this->getPixel(i) - this->getPixel(i)),norm);
+        d += power(abs(this->getPixel(i) - image->getPixel(i)),norm);
     }
     return pow(d, 1/norm);
 }

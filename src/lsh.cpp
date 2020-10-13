@@ -1,4 +1,5 @@
 #include "../headers/lsh.h"
+#include <algorithm>
 
 LSH::LSH(int k,int w,int L,Dataset *imageDataset) {
     this->k = k;
@@ -19,6 +20,23 @@ LSH::LSH(int k,int w,int L,Dataset *imageDataset) {
         }
     }
 }
+
+
+std::vector<std::pair<double, int>> LSH::approximate_kNN(Image *q, int N) {
+    std::vector<std::pair<double,int>> neighbors;
+
+    for (int i = 0; i < L; i++) {
+        std::list<Image*> bucket = this->hashTables[i]->getBucketImages(q);
+        for (std::list<Image*>::iterator p = bucket.begin(); p != bucket.end(); p++) {
+            std::pair<double,int> tmp(q->distance(*p,1),(*p)->getId());
+            neighbors.push_back(tmp);
+        }
+    }
+    std::sort(neighbors.begin(),neighbors.end());
+    neighbors.resize(N);
+    return neighbors;
+}
+
 
 LSH::~LSH() {
     // Destroy all hash tables

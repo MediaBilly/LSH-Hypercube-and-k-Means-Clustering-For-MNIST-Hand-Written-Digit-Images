@@ -13,5 +13,6 @@ class LSH
         Hash_Table **hashTables;
     public:
         LSH(int k,int w,int L,Dataset *imageDataset);
+        std::vector<std::pair<double, int>> approximate_kNN(Image *q, int N);
         ~LSH();
 };

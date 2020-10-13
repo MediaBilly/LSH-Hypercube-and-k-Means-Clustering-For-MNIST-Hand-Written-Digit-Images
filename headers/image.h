@@ -12,6 +12,7 @@ class Image
     public:
         Image(int id, int width, int height);
         bool setPixel(int index, Pixel pixel);
+        int getId();
         Pixel getPixel(int index);
         int getSize();
         // Calculates the p-norm distance to another image

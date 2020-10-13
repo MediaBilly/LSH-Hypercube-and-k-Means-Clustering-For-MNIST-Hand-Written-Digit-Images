@@ -1,7 +1,9 @@
 
 #include <iostream>
 #include <string>
+#include <ctime>
 #include "../headers/dataset.h"
+#include "../headers/bruteforce_search.h"
 #include "../headers/lsh.h"
 
 using namespace std;
@@ -83,7 +85,28 @@ int main(int argc, char const *argv[])
     // Get query images
     std::vector<Image*> queryImages = queryset->getImages();
     
+    Brureforce_Search *bruteforce = new Brureforce_Search(images);
+
+    for (unsigned int i = 0; i < queryImages.size(); i++) {
+        std::cout << "Query: " << queryImages[i]->getId() << std::endl;
+        clock_t begin_lsh_time = clock();
+        std::vector<std::pair<double, int>> lshNearestNeighbours = lsh->approximate_kNN(queryImages[i],N);
+        double lsh_time = double(clock() - begin_lsh_time) / CLOCKS_PER_SEC;
+        clock_t begin_bf_time = clock();
+        std::vector<std::pair<double, int>> exactNearestNeighbours = bruteforce->exactNN(queryImages[i],N);
+        double bf_time = double(clock() - begin_bf_time) / CLOCKS_PER_SEC;
+        for (unsigned int j = 0; j < lshNearestNeighbours.size(); j++) {
+            std::cout << "Nearest neighbor-" << j+1 << ": " << lshNearestNeighbours[j].second << std::endl;
+            std::cout << "distanceLSH: " << lshNearestNeighbours[j].first << std::endl;
+            std::cout << "distanceTrue: " << exactNearestNeighbours[j].first << std::endl;
+        }
+        std::cout << "tLSH: " << lsh_time << std::endl;
+        std::cout << "tTrue: " << bf_time << std::endl;
+        std::cout << std::endl;
+    }
     
+
+    delete bruteforce;
     delete dataset;
     delete queryset;
     delete lsh;
