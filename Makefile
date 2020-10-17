@@ -30,7 +30,7 @@ hash_function.o:$(SRC_DIR)/hash_function.cpp
 hash_table.o:$(SRC_DIR)/hash_table.cpp 
 	$(CC) $(FLAGS) -o hash_table.o -c $(SRC_DIR)/hash_table.cpp
 
-utilities.o:$(SRC_DIR)/utilities.o
+utilities.o:$(SRC_DIR)/utilities.cpp
 	$(CC) $(FLAGS) -o utilities.o -c $(SRC_DIR)/utilities.cpp
 
 .PHONY : clean

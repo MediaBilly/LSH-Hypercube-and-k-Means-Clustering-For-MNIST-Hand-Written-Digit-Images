@@ -17,7 +17,7 @@ int main(int argc, char const *argv[])
 	string inputFile, queryFile, outputFile;
     // Set default parameter values
 	int k = 4, L = 5, N = 1;
-    double R = 1.0;
+    double R = 10000;
     /*
     // Check usage
     if (argc >= 7 && argc <= 15) {
@@ -77,7 +77,9 @@ int main(int argc, char const *argv[])
     std::vector<Image*> images = dataset->getImages();
 
     // Initialize LSH interface
-    LSH *lsh = new LSH(k, (int)10*R, L, dataset);
+    int w = dataset->avg_NN_distance() * 4;
+    std::cout << "w = " << w << std::endl;
+    LSH *lsh = new LSH(k, w, L, dataset);
 
     // Read queryset
     Dataset *queryset = new Dataset("./datasets/query.dat");
@@ -85,23 +87,32 @@ int main(int argc, char const *argv[])
     // Get query images
     std::vector<Image*> queryImages = queryset->getImages();
     
-    Brureforce_Search *bruteforce = new Brureforce_Search(images);
+    Bruteforce_Search *bruteforce = new Bruteforce_Search(images);
 
     for (unsigned int i = 0; i < queryImages.size(); i++) {
         std::cout << "Query: " << queryImages[i]->getId() << std::endl;
+
         clock_t begin_lsh_time = clock();
         std::vector<std::pair<double, int>> lshNearestNeighbours = lsh->approximate_kNN(queryImages[i],N);
         double lsh_time = double(clock() - begin_lsh_time) / CLOCKS_PER_SEC;
+
         clock_t begin_bf_time = clock();
         std::vector<std::pair<double, int>> exactNearestNeighbours = bruteforce->exactNN(queryImages[i],N);
         double bf_time = double(clock() - begin_bf_time) / CLOCKS_PER_SEC;
+        
         for (unsigned int j = 0; j < lshNearestNeighbours.size(); j++) {
             std::cout << "Nearest neighbor-" << j+1 << ": " << lshNearestNeighbours[j].second << std::endl;
             std::cout << "distanceLSH: " << lshNearestNeighbours[j].first << std::endl;
             std::cout << "distanceTrue: " << exactNearestNeighbours[j].first << std::endl;
         }
+
         std::cout << "tLSH: " << lsh_time << std::endl;
         std::cout << "tTrue: " << bf_time << std::endl;
+        std::cout << "R-near neighbors:\n";
+        std::vector<int> rNN = lsh->rangeSearch(queryImages[i],R);
+        for (unsigned int j = 0; j < rNN.size(); j++) {
+            std::cout << rNN[j] << std::endl;
+        }
         std::cout << std::endl;
     }
     

@@ -1,12 +1,12 @@
 #include "../headers/bruteforce_search.h"
 #include <algorithm>
 
-Brureforce_Search::Brureforce_Search(std::vector<Image*> images) {
+Bruteforce_Search::Bruteforce_Search(std::vector<Image*> images) {
     this->images = images;
 }
 
 
-std::vector<std::pair<double,int>> Brureforce_Search::exactNN(Image *q, int N) {
+std::vector<std::pair<double,int>> Bruteforce_Search::exactNN(Image *q, int N) {
     // Calculate distance of q to all the points in the dataset
     std::vector<std::pair<double,int>> neighbors;
     
@@ -20,6 +20,6 @@ std::vector<std::pair<double,int>> Brureforce_Search::exactNN(Image *q, int N) {
     return neighbors;
 }
 
-Brureforce_Search::~Brureforce_Search() {
+Bruteforce_Search::~Bruteforce_Search() {
 
 }

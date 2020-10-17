@@ -1,4 +1,5 @@
 #include "../headers/dataset.h"
+#include "../headers/bruteforce_search.h"
 #include <iostream>
 #include <fstream>
 #include <cstdio>
@@ -6,6 +7,7 @@
 #include <cerrno>
 
 #define SWAP_INT32(x) (((x) >> 24) | (((x) & 0x00FF0000) >> 8) | (((x) & 0x0000FF00) << 8) | ((x) << 24))
+#define W_SAMPLE_SIZE 50
 
 Dataset::Dataset(std::string inputPath)
 {
@@ -30,7 +32,7 @@ Dataset::Dataset(std::string inputPath)
 
         input.read((char*)&img, sizeof(img));
         // Read pixels for every image
-        this->images.push_back(new Image(i+1, this->head.num_of_columns, this->head.num_of_rows));
+        this->images.push_back(new Image(i, this->head.num_of_columns, this->head.num_of_rows));
         for (int p = 0; p < this->getImageDimension(); p++) {
             this->images.at(i)->setPixel(p,img[p]);
         }
@@ -42,6 +44,20 @@ Dataset::Dataset(std::string inputPath)
 int Dataset::getImageDimension() {
     return this->head.num_of_rows * this->head.num_of_columns;
 }
+
+
+int Dataset::avg_NN_distance() {
+    int step = images.size() / W_SAMPLE_SIZE;
+    double dist_sum = 0.0;
+    Bruteforce_Search bf(images);
+
+    for(unsigned int i = 0; i < images.size(); i += step) {
+        dist_sum += bf.exactNN(images[i], 2)[1].first;
+    }
+
+    return dist_sum / W_SAMPLE_SIZE;
+}
+
 
 std::vector<Image*> Dataset::getImages(){
     return this->images;

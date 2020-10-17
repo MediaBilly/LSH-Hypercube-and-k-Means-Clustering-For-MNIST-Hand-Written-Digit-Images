@@ -3,7 +3,7 @@
 #include "../headers/hash_function.h"
 #include "../headers/utilities.h"
 
-const unsigned long m = 4294967291; // m = 2^32 - 5
+const unsigned long m = 4294967291; // m = (2^32) - 5
 
 
 Hash_Function::Hash_Function(int k, int w, int d) {

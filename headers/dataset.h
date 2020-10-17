@@ -21,6 +21,8 @@ class Dataset
     public:
         Dataset(std::string inputPath);
         int getImageDimension();
+        // Used to approximate good value of w
+        int avg_NN_distance();
         std::vector<Image*> getImages();
         ~Dataset();
 };
