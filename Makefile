@@ -18,6 +18,9 @@ bruteforce_search.o:$(SRC_DIR)/bruteforce_search.cpp
 lsh.o:$(SRC_DIR)/lsh.cpp
 	$(CC) $(FLAGS) -o lsh.o -c $(SRC_DIR)/lsh.cpp
 
+hypercube.o:$(SRC_DIR)/hypercube.cpp
+	$(CC) $(FLAGS) -o hypercube.o -c $(SRC_DIR)/hypercube.cpp
+
 dataset.o:$(SRC_DIR)/dataset.cpp
 	$(CC) $(FLAGS) -o dataset.o -c $(SRC_DIR)/dataset.cpp
 

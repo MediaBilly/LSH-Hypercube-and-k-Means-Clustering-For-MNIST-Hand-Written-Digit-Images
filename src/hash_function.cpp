@@ -1,5 +1,5 @@
 #include <iostream>
-#include <cstdlib>
+#include <random>
 #include "../headers/hash_function.h"
 #include "../headers/utilities.h"
 
