@@ -1,7 +1,7 @@
 #include "../headers/lsh.h"
 #include <algorithm>
 #include <unordered_set> 
-
+#include <iostream>
 
 LSH::LSH(int k,int w,int L, Dataset *imageDataset) {
     this->k = k;

@@ -77,7 +77,7 @@ int main(int argc, char const *argv[])
     std::vector<Image*> images = dataset->getImages();
 
     // Initialize LSH interface
-    int w = dataset->avg_NN_distance() * 4;
+    int w = dataset->avg_NN_distance() * 5;
     std::cout << "w = " << w << std::endl;
     LSH *lsh = new LSH(k, w, L, dataset);
 
