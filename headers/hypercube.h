@@ -14,9 +14,9 @@ class Hypercube
         std::unordered_map<unsigned long,int> *f;
         std::list<Image*> *vertices;
         unsigned int hash(Image *image);
-        std::list<Image*> search(int M, int probes, int curVertex, int checked_mask);
+        std::list<Image*> search(unsigned int M, int probes, int curVertex, int checked_mask);
     public:
-        Hypercube(Dataset dataset, int dimension, int w);
+        Hypercube(Dataset *dataset, int dimension, int w);
         bool insert(Image *image);
         // Returns M similar points sorted by their distance from q in ascending order
         std::list<std::pair<double, int>> searchSimilarPoints(Image *q, int M, int probes);
