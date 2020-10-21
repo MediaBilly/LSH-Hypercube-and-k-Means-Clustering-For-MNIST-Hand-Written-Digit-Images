@@ -116,13 +116,13 @@ int main(int argc, char const *argv[])
 
         std::cout << "tHypercube: " << cube_time << std::endl;
         std::cout << "tTrue: " << bf_time << std::endl;
-        /*
+        
         std::cout << "R-near neighbors:\n";
-        std::vector<int> rNN = lsh->rangeSearch(queryImages[i],R);
-        for (unsigned int j = 0; j < rNN.size(); j++) {
-            std::cout << rNN[j] << std::endl;
+        std::list<Image*> rNN = hypercube->rangeSearch(queryImages[i], M, probes, R);
+        for (std::list<Image*>::iterator it = rNN.begin(); it != rNN.end(); it++) {
+            std::cout << (*it)->getId() << std::endl;
         }
-        */
+
         std::cout << std::endl;
     }
     

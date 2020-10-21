@@ -2,7 +2,8 @@
 #include "../headers/utilities.h"
 #include <cmath>
 #include <iostream>
-//#include <bitset>
+
+#define INF 1.0/0.0
 
 Hypercube::Hypercube(Dataset *imageDataset, int dimension, int w) {
     // Initialize arguments
@@ -51,16 +52,21 @@ bool Hypercube::insert(Image *image) {
 }
 
 
-std::list<Image*> Hypercube::search(unsigned int M, int probes, int curVertex, int checked_mask) {
+std::list<Image*> Hypercube::search(unsigned int M, int probes, int curVertex, int checked_mask, double R,Image *q) {
     // Base case
     if (probes <= 0) {
         std::list<Image*> emptyList;
         return emptyList;
     }
-    //std::bitset<32> x(curVertex),y(checked_mask);
-    //std::cout << "Vertex: " << x << " Hammed bits: " << y << std::endl;
     // Search current vertex
-    std::list<Image*> result = this->vertices[curVertex];
+    std::list<Image*> result;
+    for (std::list<Image*>::iterator it = this->vertices[curVertex].begin();it != this->vertices[curVertex].end(); it++) {
+        // Check if current point distance to q lies in range R
+        if (q->distance(*it,1) <= R) {
+            result.push_back(*it);
+        }
+    }
+    
     if (result.size() > M) {
         result.resize(M);
     }
@@ -71,7 +77,7 @@ std::list<Image*> Hypercube::search(unsigned int M, int probes, int curVertex, i
     for (int i = 0; M > 0 && probes > 0 && i < this->dimension; i++) {
         // Check if ith bit was not previously hammed 
         if (!(checked_mask & (1 << i))) {
-            std::list<Image*> rec = search(M, probes - this->dimension, curVertex ^ (1 << i), checked_mask | (1 << i));
+            std::list<Image*> rec = search(M, probes - this->dimension, curVertex ^ (1 << i), checked_mask | (1 << i), R, q);
             M -= rec.size();
             probes--;
             result.splice(result.end(), rec);
@@ -83,8 +89,7 @@ std::list<Image*> Hypercube::search(unsigned int M, int probes, int curVertex, i
 
 
 std::list<std::pair<double,int>> Hypercube::searchSimilarPoints(Image *q,int M, int probes) {
-    std::list<Image*> ret = this->search(M,probes,this->hash(q),0);
-    // std::cout << ret.size() << std::endl;
+    std::list<Image*> ret = this->search(M,probes,this->hash(q),0, INF,q);
     std::list<std::pair<double,int>> result;
     
     for (std::list<Image*>::iterator it = ret.begin(); it != ret.end(); it++) {
@@ -92,9 +97,11 @@ std::list<std::pair<double,int>> Hypercube::searchSimilarPoints(Image *q,int M, 
         result.push_back(tmp);
     }
     
-    //result.sort();
-    //ret.resize(M);
     return result;
+}
+
+std::list<Image*> Hypercube::rangeSearch(Image *q, int M, int probes, double R) {
+    return this->search(M, probes, this->hash(q), 0, R, q);
 }
 
 Hypercube::~Hypercube() {
