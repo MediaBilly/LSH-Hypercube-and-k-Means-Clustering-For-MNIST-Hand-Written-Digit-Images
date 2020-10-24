@@ -3,3 +3,4 @@ cube
 cluster
 *.o
 .vscode
+.gitignore

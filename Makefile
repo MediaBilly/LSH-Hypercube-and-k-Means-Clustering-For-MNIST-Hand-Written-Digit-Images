@@ -1,6 +1,6 @@
 CC = g++
 FLAGS = -Wall -O3
-TARGETS = lsh cube
+TARGETS = lsh cube cluster
 SRC_DIR = ./src
 OBJS = *.o
 
@@ -12,11 +12,17 @@ lsh:lsh_main.o lsh.o dataset.o image.o hash_table.o hash_function.o utilities.o 
 cube:hypercube_main.o hypercube.o dataset.o image.o hash_table.o hash_function.o utilities.o bruteforce_search.o
 	$(CC) $(FLAGS) -o cube hypercube_main.o hypercube.o dataset.o image.o hash_table.o hash_function.o utilities.o bruteforce_search.o
 
+cluster:cluster.o dataset.o image.o bruteforce_search.o utilities.o
+	$(CC) $(FLAGS) -o cluster cluster.o dataset.o image.o bruteforce_search.o utilities.o
+
 lsh_main.o:$(SRC_DIR)/lsh_main.cpp
 	$(CC) $(FLAGS) -o lsh_main.o -c $(SRC_DIR)/lsh_main.cpp
 
 hypercube_main.o:$(SRC_DIR)/hypercube_main.cpp
 	$(CC) $(FLAGS) -o hypercube_main.o -c $(SRC_DIR)/hypercube_main.cpp
+
+cluster.o:$(SRC_DIR)/cluster.cpp
+	$(CC) $(FLAGS) -o cluster.o -c $(SRC_DIR)/cluster.cpp
 
 bruteforce_search.o:$(SRC_DIR)/bruteforce_search.cpp
 	$(CC) $(FLAGS) -o bruteforce_search.o -c $(SRC_DIR)/bruteforce_search.cpp
