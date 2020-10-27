@@ -10,6 +10,21 @@ Image::Image(int id,int width,int height) {
     this->pixels = new Pixel[width*height];
 }
 
+// Copy constructor
+Image::Image(Image &img) {
+    this->id = img.id;
+    this->width = img.width;
+    this->height = img.height;
+    // Copy pixels
+    this->pixels = new Pixel[width*height];
+    for (int i = 0; i < width*height; i++) {
+        this->pixels[i] = img.pixels[i];
+    }
+    
+}
+
+
+
 bool Image::setPixel(int index,Pixel pixel) {
     // Check bounds
     if (index >= this->getSize() || index < 0) {

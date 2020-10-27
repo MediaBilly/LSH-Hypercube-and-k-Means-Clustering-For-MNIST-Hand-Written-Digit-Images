@@ -4,3 +4,4 @@ cluster
 *.o
 .vscode
 .gitignore
+out

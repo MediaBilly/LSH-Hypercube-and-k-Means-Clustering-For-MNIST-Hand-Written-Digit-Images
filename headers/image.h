@@ -11,6 +11,7 @@ class Image
         Pixel *pixels;
     public:
         Image(int id, int width, int height);
+        Image(Image &img);
         bool setPixel(int index, Pixel pixel);
         int getId();
         Pixel getPixel(int index);

@@ -1,5 +1,6 @@
 #include "../headers/hypercube.h"
 #include "../headers/utilities.h"
+#include <random>
 #include <cmath>
 #include <iostream>
 
@@ -29,6 +30,8 @@ Hypercube::Hypercube(Dataset *imageDataset, int dimension, int w) {
 
 
 unsigned int Hypercube::hash(Image *image) {
+    std::default_random_engine generator;
+    std::uniform_int_distribution<int> uniform_distribution(0,1);
     unsigned int result = 0;
     // Generate hash value (project vector to a vertice in the hypercube)
     for (int i = 0; i < this->dimension; i++) {
@@ -36,7 +39,7 @@ unsigned int Hypercube::hash(Image *image) {
         // Check if we have already generated a bit for the d - i th hash
         if (this->f[this->dimension - 1 - i].find(hash) == this->f[this->dimension - 1 - i].end()) {
             // If not, generate it now by flipping a coin
-            this->f[this->dimension - 1 - i][hash] = rand() % 2;
+            this->f[this->dimension - 1 - i][hash] = uniform_distribution(generator);
         }
         
         result |= (this->f[this->dimension - 1 - i][hash] << i);
