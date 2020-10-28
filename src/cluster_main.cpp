@@ -3,6 +3,9 @@
 #include <string>
 #include <random>
 #include <unordered_set>
+#include <unordered_map>
+#include <algorithm>
+#include <utility>
 #include "../headers/dataset.h"
 #include "../headers/cluster.h"
 
@@ -174,23 +177,44 @@ int main(int argc, char const *argv[]) {
     }
 
     // Lloyd's algorithn
-    for (unsigned int i = 0; i < images.size(); i++) {
-        // Find closest cluster for the current(ith) image
-        double minDist = 1.0/0.0;
-        Cluster *minCluster = NULL;
-        for (unsigned j = 0; j < clusters.size(); j++) {
-            double dist = images[i]->distance(clusters[j]->getCentroid(),1);
-            if (dist < minDist) {
-                minDist = dist;
-                minCluster = clusters[j];
+    unsigned int assignments;
+    std::unordered_map<int, Cluster*> clusterHistory;
+
+    do {
+        assignments = 0;
+        // Assignment step
+        for (unsigned int i = 0; i < images.size(); i++) {
+            // Find closest cluster for the current(ith) image
+            double minDist = 1.0/0.0;
+            Cluster *minCluster = NULL;
+            for (unsigned j = 0; j < clusters.size(); j++) {
+                double dist = images[i]->distance(clusters[j]->getCentroid(),1);
+                if (dist < minDist) {
+                    minDist = dist;
+                    minCluster = clusters[j];
+                }
+            }
+            // Insert the ith image to it's closest cluster
+            if (minCluster->addPoint(images[i])) {
+                // Point was not in min cluster, we just added it
+                assignments++;
+                // Now we want to remove it from the previous cluster if it's current cluster is not it's first one
+                if (clusterHistory.find(images[i]->getId()) != clusterHistory.end()) {
+                    clusterHistory[images[i]->getId()]->removePoint(images[i]->getId());
+                }
+                // And set the new cluster in it's history map
+                clusterHistory[images[i]->getId()] = minCluster;
             }
         }
-        // Insert the ith image to it's closest cluster
-        minCluster->addPoint(images[i]);
-    }
+        // Update all cluster centroids
+        for (unsigned int i = 0; i < clusters.size(); i++) {
+            clusters[i]->updateCentroid();
+        }
+    } while (assignments >= 10000);
     
     // Print stats
     std::cout << "Algorithm: Lloyds\n";
+    
     for (unsigned int i = 0; i < clusters.size(); i++) {
         std::cout << "CLUSTER-" << i+1 << " {size: " << clusters[i]->getSize() << ", centroid: [";
         for (int j = 0; j < dataset->getImageDimension() - 1; j++) {
@@ -198,6 +222,27 @@ int main(int argc, char const *argv[]) {
         }
         std::cout << (int)clusters[i]->getCentroid()->getPixel(dataset->getImageDimension()-1) << "]}\n";
     }
+
+    // Calculate average Silhouette for all images
+    double averageSilhouette = 0.0;
+    for (unsigned int i = 0; i < images.size(); i++) {
+        // Calculate distance of ith image to all the clusters
+        std::vector<std::pair<double,Cluster*>> distToClusters;
+        for (unsigned int j = 0; j < clusters.size(); j++) {
+            std::pair<double,Cluster*> tmp(images[i]->distance(clusters[j]->getCentroid(),1),clusters[j]);
+            distToClusters.push_back(tmp);
+        }
+        std::sort(distToClusters.begin(),distToClusters.end());
+        Cluster* neighbourCluster = distToClusters[1].second;
+        // Calculate average distance of ith image to images in same cluster
+        double ai = clusterHistory[images[i]->getId()]->avgDistance(images[i]);
+        // Calculate average distance of ith image to images in the next best(neighbor) cluster
+        double bi = neighbourCluster->avgDistance(images[i]);
+        averageSilhouette += (bi - ai)/std::max(ai, bi);
+        std::cout << i+1 << "\n";
+    }
+    averageSilhouette /= images.size();
+    std::cout << "Silhouette: " << averageSilhouette << std::endl;
 
     for (unsigned int i = 0;i < clusters.size();i++) {
         delete clusters[i];

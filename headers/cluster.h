@@ -11,8 +11,11 @@ class Cluster
     public:
         Cluster(Image &centroid);
         bool addPoint(Image* point);
+        bool removePoint(int id);
         unsigned int getSize();
+        void updateCentroid();
         Image* getCentroid();
+        double avgDistance(Image *point);
         ~Cluster();
 };
 
