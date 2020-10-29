@@ -12,8 +12,8 @@ lsh:lsh_main.o lsh.o dataset.o image.o hash_table.o hash_function.o utilities.o 
 cube:hypercube_main.o hypercube.o dataset.o image.o hash_table.o hash_function.o utilities.o bruteforce_search.o
 	$(CC) $(FLAGS) -o cube hypercube_main.o hypercube.o dataset.o image.o hash_table.o hash_function.o utilities.o bruteforce_search.o
 
-cluster:cluster_main.o dataset.o image.o bruteforce_search.o utilities.o cluster.o
-	$(CC) $(FLAGS) -o cluster cluster_main.o dataset.o image.o bruteforce_search.o utilities.o cluster.o
+cluster:cluster_main.o dataset.o image.o bruteforce_search.o utilities.o cluster.o lsh.o hypercube.o hash_table.o hash_function.o 
+	$(CC) $(FLAGS) -o cluster cluster_main.o dataset.o image.o bruteforce_search.o utilities.o cluster.o lsh.o hypercube.o hash_table.o hash_function.o 
 
 lsh_main.o:$(SRC_DIR)/lsh_main.cpp
 	$(CC) $(FLAGS) -o lsh_main.o -c $(SRC_DIR)/lsh_main.cpp
