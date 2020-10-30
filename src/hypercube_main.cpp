@@ -119,8 +119,12 @@ int main(int argc, char const *argv[])
         
         std::cout << "R-near neighbors:\n";
         std::list<Image*> rNN = hypercube->rangeSearch(queryImages[i], M, probes, R);
-        for (std::list<Image*>::iterator it = rNN.begin(); it != rNN.end(); it++) {
-            std::cout << (*it)->getId() << std::endl;
+        if (rNN.size() != 0) {
+            for (std::list<Image*>::iterator it = rNN.begin(); it != rNN.end(); it++) {
+                std::cout << (*it)->getId() << std::endl;
+            }
+        } else {
+            std::cout << "Not found!";
         }
 
         std::cout << std::endl;

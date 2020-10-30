@@ -110,9 +110,14 @@ int main(int argc, char const *argv[])
         std::cout << "tTrue: " << bf_time << std::endl;
         std::cout << "R-near neighbors:\n";
         std::vector<int> rNN = lsh->rangeSearch(queryImages[i],R);
-        for (unsigned int j = 0; j < rNN.size(); j++) {
-            std::cout << rNN[j] << std::endl;
+        if (rNN.size() != 0) {
+            for (unsigned int j = 0; j < rNN.size(); j++) {
+                std::cout << rNN[j] << std::endl;
+            }
+        } else {
+            std::cout << "Not found!";
         }
+        
         std::cout << std::endl;
     }
     

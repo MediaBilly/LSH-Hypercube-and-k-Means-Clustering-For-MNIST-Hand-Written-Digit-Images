@@ -18,7 +18,7 @@ void usage() {
 
 
 int main(int argc, char const *argv[]) {
-    std::string inputFile, configFile = "cluster.conf", outputFile, method = "LSH";
+    std::string inputFile, configFile = "cluster.conf", outputFile, method = "Hypercube";
     bool complete = false;
 
     // Read command line arguments
@@ -54,7 +54,7 @@ int main(int argc, char const *argv[]) {
     // }
 
 
-    int K, L = 3, k_LSH = 4, M = 10, k_hypercube = 3, probes = 2; 
+    int K = 10, L = 3, k_LSH = 4, M = 10, k_hypercube = 3, probes = 2; 
 
     std::ifstream config_ifs(configFile);
 
@@ -90,7 +90,7 @@ int main(int argc, char const *argv[]) {
     config_ifs.close();
 
     // Read Dataset
-    Dataset *dataset = new Dataset("./datasets/input.dat");
+    Dataset *dataset = new Dataset("./datasets/query.dat");
 
     // Get images from dataset
     std::vector<Image*> images = dataset->getImages();
@@ -301,12 +301,66 @@ int main(int argc, char const *argv[]) {
             }
         } else if (method == "Hypercube") {
             // Hypercube Reverse Assignment
+            std::unordered_map<int,Image*> tmpPointsMap = pointsMap;
+            double R = minDistBetweenCenters/2.0;
+            unsigned int newPoints;
+            do {
+                newPoints = 0;
+                //clock_t tmpTime = clock();
+                // Range search on all cluster centroids and assign the returned in-range points
+                for (unsigned int i = 0; i < clusters.size(); i++) {
+                    std::list<Image*> pointsInRange = hypercube->rangeSearch(clusters[i]->getCentroid(),M,probes,R);
+                    for (std::list<Image*>::iterator it = pointsInRange.begin(); it != pointsInRange.end(); it++) {
+                        // Check if current in-range point was not yet assigned to a cluster
+                        if (tmpPointsMap.find((*it)->getId()) != tmpPointsMap.end()) {
+                            // If so, assign it to the corresponding cluster
+                            if (clusters[i]->addPoint(tmpPointsMap[(*it)->getId()])) {
+                                // Point was not in min cluster, we just added it
+                                assignments++;
+                                // Now we want to remove it from the previous cluster if it's current cluster is not it's first one
+                                if (clusterHistory.find((*it)->getId()) != clusterHistory.end()) {
+                                    clusterHistory[(*it)->getId()]->removePoint((*it)->getId());
+                                }
+                                // And set the new cluster in it's history map
+                                clusterHistory[(*it)->getId()] = clusters[i];
+                            }
+                            tmpPointsMap.erase((*it)->getId());
+                            newPoints++;
+                        }
+                    }
+                }
+                //std::cout << "R = " << R << " New Points = " << newPoints << " Rev.As step time: " << double(clock() - tmpTime) / CLOCKS_PER_SEC << std::endl;
+                R *= 2.0;
+            } while (newPoints > 0);
+            // Assign rest points using Lloyd's method
+            for(auto it : tmpPointsMap) {
+                double distToClosestCentroid = 1.0/0.0;
+                Cluster *closestCluster = NULL;
+                for (unsigned int i = 0; i < clusters.size(); i++) {
+                    double dist = it.second->distance(clusters[i]->getCentroid(),1);
+                    if (dist < distToClosestCentroid) {
+                        distToClosestCentroid = dist;
+                        closestCluster = clusters[i];
+                    }
+                }
+                // Insert the current image to it's closest cluster
+                if (closestCluster->addPoint(it.second)) {
+                    // Point was not in min cluster, we just added it
+                    assignments++;
+                    // Now we want to remove it from the previous cluster if it's current cluster is not it's first one
+                    if (clusterHistory.find(it.second->getId()) != clusterHistory.end()) {
+                        clusterHistory[it.second->getId()]->removePoint(it.second->getId());
+                    }
+                    // And set the new cluster in it's history map
+                    clusterHistory[it.second->getId()] = closestCluster;
+                }
+            }
         }
         // Update all cluster centroids
         for (unsigned int i = 0; i < clusters.size(); i++) {
             clusters[i]->updateCentroid();
         }
-    } while (assignments >= 1000);
+    } while (assignments >= 1);
     double clustering_time = double(clock() - begin_clustering_time) / CLOCKS_PER_SEC;
 
     // Print used method
@@ -332,8 +386,9 @@ int main(int argc, char const *argv[]) {
     // Print clustering time
     std::cout << "clustering_time: " << clustering_time << std::endl;
 
-    // Calculate average Silhouette for all images
+    // Calculate Silhouette for all images
     double averageSilhouette = 0.0;
+    std::vector<double> s;
     for (unsigned int i = 0; i < images.size(); i++) {
         // Calculate distance of ith image to all the clusters
         Cluster *neighbourCluster = NULL, *closestCluster = NULL;
@@ -358,10 +413,43 @@ int main(int argc, char const *argv[]) {
         double ai = clusterHistory[images[i]->getId()]->avgDistance(images[i]);
         // Calculate average distance of ith image to images in the next best(neighbor) cluster
         double bi = neighbourCluster->avgDistance(images[i]);
-        averageSilhouette += (bi - ai)/std::max(ai, bi);
+        // Calculate Silhouette for ith image
+        double si = (bi - ai)/std::max(ai, bi);
+        s.push_back(si);
+        averageSilhouette += si;
     }
+    // Print Silhouettes
+    std::cout << "Silhouette: [";
+
+    // Calculate and print average Silhouette for each cluster
+    for (unsigned int i = 0; i < clusters.size(); i++) {
+        double avgS = 0.0;
+        std::vector<Image*> clusterPoints = clusters[i]->getPoints();
+        for (unsigned int j = 0; j < clusterPoints.size(); j++) {
+            avgS += s[clusterPoints[j]->getId()];
+        }
+        std::cout << avgS/clusterPoints.size() << ",";
+    }
+    
+    // Print average Silhouette for all points in dataset
     averageSilhouette /= images.size();
-    std::cout << "Silhouette: " << averageSilhouette << std::endl;
+    std::cout << " " << averageSilhouette << "]\n";
+
+    // Optionally (with command line parameter –complete) print image numbers in each cluster
+    if (complete) {
+        for (unsigned int i = 0; i < clusters.size(); i++) {
+            std::cout << "CLUSTER-" << i+1 << " {[";
+            for (int j = 0; j < dataset->getImageDimension() - 1; j++) {
+                std::cout << (int)clusters[i]->getCentroid()->getPixel(j) << ", ";
+            }
+            std::cout << (int)clusters[i]->getCentroid()->getPixel(dataset->getImageDimension()-1) << "]";
+            std::vector<Image*> clusterImages = clusters[i]->getPoints();
+            for (unsigned int j = 0; j < clusterImages.size(); j++) {
+                std::cout << ", " << clusterImages[j]->getId();
+            }
+            std::cout << "}\n";
+        }
+    }
 
     for (unsigned int i = 0;i < clusters.size();i++) {
         delete clusters[i];

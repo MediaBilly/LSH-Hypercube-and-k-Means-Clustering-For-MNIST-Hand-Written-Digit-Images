@@ -45,7 +45,6 @@ struct PointsComparator {
     int d;
 };
 
-
 void Cluster::updateCentroid() {
     // Update the centroid to be the median of all the cluster's points
     for (int j = 0; j < this->centroid->getSize(); j++) {
@@ -65,6 +64,15 @@ Image* Cluster::getCentroid() {
     return this->centroid;
 }
 
+std::vector<Image*> Cluster::getPoints() {
+    std::vector<Image*> ret;
+
+    for (auto it : this->points) {
+        ret.push_back(it.second);
+    }
+
+    return ret;
+}
 
 double Cluster::avgDistance(Image *point) {
     double dist = 0.0;

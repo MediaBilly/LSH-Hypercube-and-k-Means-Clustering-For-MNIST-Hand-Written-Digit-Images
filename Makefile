@@ -1,5 +1,5 @@
 CC = g++
-FLAGS = -Wall -O3
+FLAGS = -Wall -O3 
 TARGETS = lsh cube cluster
 SRC_DIR = ./src
 OBJS = *.o

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <unordered_map>
 #include "image.h"
 
@@ -15,6 +16,7 @@ class Cluster
         unsigned int getSize();
         void updateCentroid();
         Image* getCentroid();
+        std::vector<Image*> getPoints();
         double avgDistance(Image *point);
         ~Cluster();
 };
