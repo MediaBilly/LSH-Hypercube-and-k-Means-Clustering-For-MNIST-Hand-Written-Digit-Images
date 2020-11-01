@@ -31,7 +31,7 @@ double minDistBetweenClusterCentroids(std::vector<Cluster*> &clusters) {
 }
 
 int main(int argc, char const *argv[]) {
-    std::string inputFile, configFile = "cluster.conf", outputFile, method = "Hypercube";
+    std::string inputFile, configFile = "cluster.conf", outputFile, method = "LSH";
     bool complete = false;
 
     // Read command line arguments
@@ -357,8 +357,10 @@ int main(int argc, char const *argv[]) {
         }
         std::cout << "Total Assignments = " << assignments << std::endl;
         // Update all cluster centroids
-        for (unsigned int i = 0; i < clusters.size(); i++) {
-            clusters[i]->updateCentroid();
+        if (assignments > 0) {
+            for (unsigned int i = 0; i < clusters.size(); i++) {
+                clusters[i]->updateCentroid();
+            }
         }
     } while (assignments > 0);
     double clustering_time = double(clock() - begin_clustering_time) / CLOCKS_PER_SEC;
