@@ -299,6 +299,7 @@ int main(int argc, char const *argv[]) {
                         if (clusterHistory.find(it.first) == clusterHistory.end() || clusterHistory[it.first]->getId() != closestCluster->getId()) {
                             assignments++;
                         }
+
                         clusterHistory[it.first] = closestCluster;
                     }
                 } else if (method == "Hypercube") {
