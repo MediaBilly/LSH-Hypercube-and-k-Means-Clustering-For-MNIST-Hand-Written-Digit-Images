@@ -14,12 +14,13 @@ class Dataset
             int num_of_rows;
             int num_of_columns;
         };
-
+        bool valid;
         header head;
         std::vector<Image*> images;
 
     public:
         Dataset(std::string inputPath);
+        bool isValid();
         int getImageDimension();
         // Used to approximate good value of w
         int avg_NN_distance();

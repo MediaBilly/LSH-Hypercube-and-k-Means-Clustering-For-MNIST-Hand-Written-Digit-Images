@@ -10,11 +10,12 @@
 #define W_SAMPLE_SIZE 50
 
 Dataset::Dataset(std::string inputPath)
-{
+{   
     // Open dataset binary file
     std::ifstream input(inputPath, std::ios::out | std::ios::binary);
     if(!input) {
         std::cout << "Cannot open file!:" << strerror(errno) << std::endl;
+        this->valid = false;
         return;
     }
     // Read header
@@ -39,6 +40,12 @@ Dataset::Dataset(std::string inputPath)
     }
     // Close dataset binary file
     input.close();
+
+    this->valid = true;
+}
+
+bool Dataset::isValid() {
+    return this->valid;
 }
 
 int Dataset::getImageDimension() {
