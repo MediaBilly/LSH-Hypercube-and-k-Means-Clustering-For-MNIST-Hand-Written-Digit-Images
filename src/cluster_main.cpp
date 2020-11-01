@@ -16,6 +16,19 @@ void usage() {
     std::cout << "Usage:./cluster  –i  <input  file>  –c  <configuration  file>  -o  <output  file>  -complete  <optional> -m <method: Classic OR LSH or Hypercube>\n";
 }
 
+double minDistBetweenClusterCentroids(std::vector<Cluster*> &clusters) {
+    // Calculate min distance between centers to use it as start radius for range search in reverse assignment
+    double ret = 1.0/0.0;
+    for(unsigned int i = 0; i < clusters.size(); i++) {
+        for(unsigned int j = i + 1; j < clusters.size(); j++) {
+            double dist = clusters[i]->getCentroid()->distance(clusters[j]->getCentroid(), 1);
+
+            if(dist < ret)
+                ret = dist;
+        }
+    }
+    return ret;
+}
 
 int main(int argc, char const *argv[]) {
     std::string inputFile, configFile = "cluster.conf", outputFile, method = "Hypercube";
@@ -175,21 +188,20 @@ int main(int argc, char const *argv[]) {
     }
     // Initialize clusters for all centroids
     std::vector<Cluster*> clusters;
+    unsigned int cid = 0;
     for (auto c : centroids) {
-        clusters.push_back(new Cluster(*images[c-1]));
+        clusters.push_back(new Cluster(*images[c-1],cid++));
     }
 
     unsigned int assignments;
     std::unordered_map<int, Cluster*> clusterHistory;
 
-    int w;
+    int w = 0;
     LSH *lsh = NULL;
     Hypercube *hypercube = NULL;
     std::unordered_map<int,Image*> pointsMap;
-    double minDistBetweenCenters = 1.0/0.0;
     if (method == "LSH" || method == "Hypercube") {
         w = dataset->avg_NN_distance() * 6;
-        
         // Initialize LSH or Hypercube interface
         if (method == "LSH") {
             lsh = new LSH(k_LSH,w,L,dataset);
@@ -201,21 +213,14 @@ int main(int argc, char const *argv[]) {
         for (unsigned int i = 0; i < images.size(); i++) {
             pointsMap[images[i]->getId()] = images[i];
         }
-
-        // Calculate min distance between centers to use it as start radius for range search in reverse assignment
-        for(unsigned int i = 0; i < clusters.size(); i++) {
-            for(unsigned int j = i + 1; j < clusters.size(); j++) {
-                double dist = clusters[i]->getCentroid()->distance(clusters[j]->getCentroid(), 1);
-
-                if(dist < minDistBetweenCenters)
-                    minDistBetweenCenters = dist;
-            }
-        }
     }
 
     // Clustering time!!!
     clock_t begin_clustering_time = clock();
     do {
+        for (unsigned int i = 0; i < clusters.size(); i++) {
+            clusters[i]->clear();
+        }
         assignments = 0;
         // Assignment step
         if (method == "Classic") {
@@ -232,110 +237,109 @@ int main(int argc, char const *argv[]) {
                     }
                 }
                 // Insert the ith image to it's closest cluster
-                if (minCluster->addPoint(images[i])) {
-                    // Point was not in min cluster, we just added it
+                minCluster->addPoint(images[i]);
+                if (clusterHistory.find(images[i]->getId()) == clusterHistory.end() || clusterHistory[images[i]->getId()]->getId() != minCluster->getId()) {
                     assignments++;
-                    // Now we want to remove it from the previous cluster if it's current cluster is not it's first one
-                    if (clusterHistory.find(images[i]->getId()) != clusterHistory.end()) {
-                        clusterHistory[images[i]->getId()]->removePoint(images[i]->getId());
-                    }
-                    // And set the new cluster in it's history map
-                    clusterHistory[images[i]->getId()] = minCluster;
                 }
+                clusterHistory[images[i]->getId()] = minCluster;
             }
         } else if (method == "LSH") {
             // LSH Reverse Assignment
             std::unordered_map<int,Image*> tmpPointsMap = pointsMap;
-            double R = minDistBetweenCenters/2.0;
-            unsigned int newPoints;
+            std::unordered_map<int,Cluster*> bestCluster;
+            double R = ceil(minDistBetweenClusterCentroids(clusters)/2.0);
+            unsigned int curPoints = 0,prevPoints;
             do {
-                newPoints = 0;
-                //clock_t tmpTime = clock();
-                // Range search on all cluster centroids and assign the returned in-range points
+                prevPoints = curPoints;
+                curPoints = 0;
+                clock_t tmpTime = clock();
+                // Range search on all cluster centroids and find the best cluster for all range-searched points
                 for (unsigned int i = 0; i < clusters.size(); i++) {
-                    std::vector<int> pointsInRange = lsh->rangeSearch(clusters[i]->getCentroid(),R);
+                    std::vector<Image*> pointsInRange = lsh->rangeSearch(clusters[i]->getCentroid(),R);
+                    curPoints += pointsInRange.size();
                     for (unsigned int j = 0; j < pointsInRange.size(); j++) {
                         // Check if current in-range point was not yet assigned to a cluster
-                        if (tmpPointsMap.find(pointsInRange[j]) != tmpPointsMap.end()) {
+                        if (tmpPointsMap.find(pointsInRange[j]->getId()) != tmpPointsMap.end()) {
                             // If so, assign it to the corresponding cluster
-                            if (clusters[i]->addPoint(tmpPointsMap[pointsInRange[j]])) {
-                                // Point was not in min cluster, we just added it
-                                assignments++;
-                                // Now we want to remove it from the previous cluster if it's current cluster is not it's first one
-                                if (clusterHistory.find(pointsInRange[j]) != clusterHistory.end()) {
-                                    clusterHistory[pointsInRange[j]]->removePoint(pointsInRange[j]);
-                                }
-                                // And set the new cluster in it's history map
-                                clusterHistory[pointsInRange[j]] = clusters[i];
-                            }
-                            tmpPointsMap.erase(pointsInRange[j]);
-                            newPoints++;
+                            bestCluster[pointsInRange[j]->getId()] = clusters[i];
+                            tmpPointsMap.erase(pointsInRange[j]->getId());
+                        } else if (pointsInRange[j]->distance(clusters[i]->getCentroid(),1) < pointsInRange[j]->distance(bestCluster[pointsInRange[j]->getId()]->getCentroid(),1)) {
+                            bestCluster[pointsInRange[j]->getId()] = clusters[i];
                         }
                     }
                 }
-                //std::cout << "R = " << R << " New Points = " << newPoints << " Rev.As step time: " << double(clock() - tmpTime) / CLOCKS_PER_SEC << std::endl;
+                std::cout << "R = " << R << " Cur Points = " << curPoints << " Prev Points = " << prevPoints << " Assignments = " << assignments << " Rev.As step time: " << double(clock() - tmpTime) / CLOCKS_PER_SEC << std::endl;
                 R *= 2.0;
-            } while (newPoints > 0);
+            } while (curPoints - prevPoints > 0);
+            // Assign all range-searched points to their best cluster
+            for (auto it : bestCluster) {
+                it.second->addPoint(pointsMap[it.first]);
+                if (clusterHistory.find(it.first) == clusterHistory.end() || clusterHistory[it.first]->getId() != it.second->getId()) {
+                    assignments++;
+                }
+                clusterHistory[it.first] = it.second;
+            }
             // Assign rest points using Lloyd's method
             for(auto it : tmpPointsMap) {
                 double distToClosestCentroid = 1.0/0.0;
                 Cluster *closestCluster = NULL;
+
                 for (unsigned int i = 0; i < clusters.size(); i++) {
                     double dist = it.second->distance(clusters[i]->getCentroid(),1);
+
                     if (dist < distToClosestCentroid) {
                         distToClosestCentroid = dist;
                         closestCluster = clusters[i];
                     }
                 }
                 // Insert the current image to it's closest cluster
-                if (closestCluster->addPoint(it.second)) {
-                    // Point was not in min cluster, we just added it
+                closestCluster->addPoint(it.second);
+                if (clusterHistory.find(it.first) == clusterHistory.end() || clusterHistory[it.first]->getId() != closestCluster->getId()) {
                     assignments++;
-                    // Now we want to remove it from the previous cluster if it's current cluster is not it's first one
-                    if (clusterHistory.find(it.second->getId()) != clusterHistory.end()) {
-                        clusterHistory[it.second->getId()]->removePoint(it.second->getId());
-                    }
-                    // And set the new cluster in it's history map
-                    clusterHistory[it.second->getId()] = closestCluster;
                 }
+                clusterHistory[it.first] = closestCluster;
             }
         } else if (method == "Hypercube") {
             // Hypercube Reverse Assignment
             std::unordered_map<int,Image*> tmpPointsMap = pointsMap;
-            double R = minDistBetweenCenters/2.0;
-            unsigned int newPoints;
+            std::unordered_map<int,Cluster*> bestCluster;
+            double R = ceil(minDistBetweenClusterCentroids(clusters)/2.0);
+            unsigned int curPoints = 0,prevPoints;
             do {
-                newPoints = 0;
-                //clock_t tmpTime = clock();
+                prevPoints = curPoints;
+                curPoints = 0;
+                clock_t tmpTime = clock();
                 // Range search on all cluster centroids and assign the returned in-range points
                 for (unsigned int i = 0; i < clusters.size(); i++) {
                     std::list<Image*> pointsInRange = hypercube->rangeSearch(clusters[i]->getCentroid(),M,probes,R);
+                    curPoints += pointsInRange.size();
                     for (std::list<Image*>::iterator it = pointsInRange.begin(); it != pointsInRange.end(); it++) {
                         // Check if current in-range point was not yet assigned to a cluster
                         if (tmpPointsMap.find((*it)->getId()) != tmpPointsMap.end()) {
                             // If so, assign it to the corresponding cluster
-                            if (clusters[i]->addPoint(tmpPointsMap[(*it)->getId()])) {
-                                // Point was not in min cluster, we just added it
-                                assignments++;
-                                // Now we want to remove it from the previous cluster if it's current cluster is not it's first one
-                                if (clusterHistory.find((*it)->getId()) != clusterHistory.end()) {
-                                    clusterHistory[(*it)->getId()]->removePoint((*it)->getId());
-                                }
-                                // And set the new cluster in it's history map
-                                clusterHistory[(*it)->getId()] = clusters[i];
-                            }
+                            bestCluster[(*it)->getId()] = clusters[i];
                             tmpPointsMap.erase((*it)->getId());
-                            newPoints++;
+                        } else if ((*it)->distance(clusters[i]->getCentroid(),1) < (*it)->distance(bestCluster[(*it)->getId()]->getCentroid(),1)) {
+                            bestCluster[(*it)->getId()] = clusters[i];
                         }
                     }
                 }
-                //std::cout << "R = " << R << " New Points = " << newPoints << " Rev.As step time: " << double(clock() - tmpTime) / CLOCKS_PER_SEC << std::endl;
+                std::cout << "R = " << R << " Cur Points = " << curPoints << " Prev Points = " << prevPoints << " Assignments = " << assignments << " Rev.As step time: " << double(clock() - tmpTime) / CLOCKS_PER_SEC << std::endl;
                 R *= 2.0;
-            } while (newPoints > 0);
+            } while (curPoints - prevPoints > 0);
+            // Assign all range-searched points to their best cluster
+            for (auto it : bestCluster) {
+                it.second->addPoint(pointsMap[it.first]);
+                if (clusterHistory.find(it.first) == clusterHistory.end() || clusterHistory[it.first]->getId() != it.second->getId()) {
+                    assignments++;
+                }
+                clusterHistory[it.first] = it.second;
+            }
             // Assign rest points using Lloyd's method
             for(auto it : tmpPointsMap) {
                 double distToClosestCentroid = 1.0/0.0;
                 Cluster *closestCluster = NULL;
+                
                 for (unsigned int i = 0; i < clusters.size(); i++) {
                     double dist = it.second->distance(clusters[i]->getCentroid(),1);
                     if (dist < distToClosestCentroid) {
@@ -344,25 +348,21 @@ int main(int argc, char const *argv[]) {
                     }
                 }
                 // Insert the current image to it's closest cluster
-                if (closestCluster->addPoint(it.second)) {
-                    // Point was not in min cluster, we just added it
+                closestCluster->addPoint(it.second);
+                if (clusterHistory.find(it.first) == clusterHistory.end() || clusterHistory[it.first]->getId() != closestCluster->getId()) {
                     assignments++;
-                    // Now we want to remove it from the previous cluster if it's current cluster is not it's first one
-                    if (clusterHistory.find(it.second->getId()) != clusterHistory.end()) {
-                        clusterHistory[it.second->getId()]->removePoint(it.second->getId());
-                    }
-                    // And set the new cluster in it's history map
-                    clusterHistory[it.second->getId()] = closestCluster;
                 }
+                clusterHistory[it.first] = closestCluster;
             }
         }
+        std::cout << "Total Assignments = " << assignments << std::endl;
         // Update all cluster centroids
         for (unsigned int i = 0; i < clusters.size(); i++) {
             clusters[i]->updateCentroid();
         }
-    } while (assignments >= 1);
+    } while (assignments > 0);
     double clustering_time = double(clock() - begin_clustering_time) / CLOCKS_PER_SEC;
-
+    
     // Print used method
     std::cout << "Algorithm: ";
     if (method == "Classic") {

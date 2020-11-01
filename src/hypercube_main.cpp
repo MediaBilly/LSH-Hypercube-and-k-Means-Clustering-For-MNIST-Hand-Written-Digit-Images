@@ -124,7 +124,7 @@ int main(int argc, char const *argv[])
                 std::cout << (*it)->getId() << std::endl;
             }
         } else {
-            std::cout << "Not found!";
+            std::cout << "Not found!\n";
         }
 
         std::cout << std::endl;

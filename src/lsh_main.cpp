@@ -109,13 +109,13 @@ int main(int argc, char const *argv[])
         std::cout << "tLSH: " << lsh_time << std::endl;
         std::cout << "tTrue: " << bf_time << std::endl;
         std::cout << "R-near neighbors:\n";
-        std::vector<int> rNN = lsh->rangeSearch(queryImages[i],R);
+        std::vector<Image*> rNN = lsh->rangeSearch(queryImages[i],R);
         if (rNN.size() != 0) {
             for (unsigned int j = 0; j < rNN.size(); j++) {
-                std::cout << rNN[j] << std::endl;
+                std::cout << rNN[j]->getId() << std::endl;
             }
         } else {
-            std::cout << "Not found!";
+            std::cout << "Not found!\n";
         }
         
         std::cout << std::endl;

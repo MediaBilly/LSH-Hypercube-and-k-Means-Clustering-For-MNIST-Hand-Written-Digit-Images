@@ -24,7 +24,7 @@ LSH::LSH(int k,int w,int L, Dataset *imageDataset) {
 }
 
 
-std::vector<std::pair<double, int>> LSH::approximate_kNN(Image *q, int N) {
+std::vector<std::pair<double, int>> LSH::approximate_kNN(Image *q, unsigned int N) {
     std::vector<std::pair<double,int>> neighbors;
     std::unordered_set<int> visited;
 
@@ -39,12 +39,14 @@ std::vector<std::pair<double, int>> LSH::approximate_kNN(Image *q, int N) {
         }
     }
     std::sort(neighbors.begin(),neighbors.end());
-    neighbors.resize(N);
+    if (neighbors.size() > N) {
+        neighbors.resize(N);
+    }
     return neighbors;
 }
 
-std::vector<int> LSH::rangeSearch(Image *q, double r) {
-    std::vector<int> neighbors;
+std::vector<Image*> LSH::rangeSearch(Image *q, double r) {
+    std::vector<Image*> neighbors;
     std::unordered_set<int> visited;
 
     for (int i = 0; i < L; i++) {
@@ -52,7 +54,7 @@ std::vector<int> LSH::rangeSearch(Image *q, double r) {
         for (std::list<Image*>::iterator p = bucket.begin(); p != bucket.end(); p++) {
             if (visited.find((*p)->getId()) == visited.end() && q->distance(*p,1) <= r) {
                 visited.insert((*p)->getId());
-                neighbors.push_back((*p)->getId());
+                neighbors.push_back(*p);
             }
         }
     }

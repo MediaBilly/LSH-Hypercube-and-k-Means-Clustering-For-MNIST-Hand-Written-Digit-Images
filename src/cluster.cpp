@@ -3,8 +3,13 @@
 #include <cmath>
 #include <vector>
 
-Cluster::Cluster(Image &centroid) {
+Cluster::Cluster(Image &centroid,unsigned int id) {
     this->centroid = new Image(centroid);
+    this->id = id;
+}
+
+unsigned int Cluster::getId() {
+    return this->id;
 }
 
 
@@ -59,6 +64,9 @@ void Cluster::updateCentroid() {
     }
 }
 
+void Cluster::clear() {
+    this->points.clear();
+}
 
 Image* Cluster::getCentroid() {
     return this->centroid;
