@@ -11,7 +11,7 @@ class Dataset
         {
             unsigned int magic_num;
             unsigned int num_of_images;
-            unsigned num_of_rows;
+            unsigned int num_of_rows;
             unsigned int num_of_columns;
         };
         bool valid;
