@@ -9,10 +9,10 @@ class Dataset
     private:
         struct header
         {
-            int magic_num;
-            int num_of_images;
-            int num_of_rows;
-            int num_of_columns;
+            unsigned int magic_num;
+            unsigned int num_of_images;
+            unsigned num_of_rows;
+            unsigned int num_of_columns;
         };
         bool valid;
         header head;

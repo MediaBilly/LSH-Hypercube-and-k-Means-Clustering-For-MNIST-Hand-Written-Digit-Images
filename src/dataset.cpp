@@ -28,7 +28,7 @@ Dataset::Dataset(std::string inputPath)
     this->head.num_of_columns = SWAP_INT32(this->head.num_of_columns);
 
     // TODO:Read images
-    for (int i = 0; i < this->head.num_of_images; i++) {
+    for (unsigned int i = 0; i < this->head.num_of_images; i++) {
         Pixel img[getImageDimension()];
 
         input.read((char*)&img, sizeof(img));

@@ -5,6 +5,6 @@ cluster
 .vscode
 .gitignore
 out
-part1.zip
 README.pdf
 report
+*.zip
